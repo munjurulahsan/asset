@@ -1,0 +1,181 @@
+{
+  "generatedAt": "2026-09-20T11:48:10.809Z",
+  "widths": [
+    480,
+    768,
+    1024
+  ],
+  "renders": [
+    {
+      "beat": "01-Hero",
+      "slug": "01-hero",
+      "source": 1867260,
+      "png": 380850,
+      "split": {
+        "cutTop": 516,
+        "cutBottom": 552
+      },
+      "variants": [
+        {
+          "w": 480,
+          "avif": 27964,
+          "webp": 65806
+        },
+        {
+          "w": 768,
+          "avif": 50465,
+          "webp": 131702
+        },
+        {
+          "w": 1024,
+          "avif": 61657,
+          "webp": 169268
+        }
+      ]
+    },
+    {
+      "beat": "02-Perception",
+      "slug": "02-perception",
+      "source": 1773810,
+      "png": 350459,
+      "split": null,
+      "variants": [
+        {
+          "w": 480,
+          "avif": 26344,
+          "webp": 58842
+        },
+        {
+          "w": 768,
+          "avif": 48084,
+          "webp": 116854
+        },
+        {
+          "w": 1024,
+          "avif": 59232,
+          "webp": 154196
+        }
+      ]
+    },
+    {
+      "beat": "03-Movement",
+      "slug": "03-movement",
+      "source": 1821519,
+      "png": 368805,
+      "split": null,
+      "variants": [
+        {
+          "w": 480,
+          "avif": 26638,
+          "webp": 62188
+        },
+        {
+          "w": 768,
+          "avif": 48694,
+          "webp": 125838
+        },
+        {
+          "w": 1024,
+          "avif": 58821,
+          "webp": 158424
+        }
+      ]
+    },
+    {
+      "beat": "04-Interaction",
+      "slug": "04-interaction",
+      "source": 1915729,
+      "png": 417711,
+      "split": null,
+      "variants": [
+        {
+          "w": 480,
+          "avif": 29626,
+          "webp": 69178
+        },
+        {
+          "w": 768,
+          "avif": 52630,
+          "webp": 138024
+        },
+        {
+          "w": 1024,
+          "avif": 62868,
+          "webp": 172748
+        }
+      ]
+    },
+    {
+      "beat": "05-Climax",
+      "slug": "05-climax",
+      "source": 1705454,
+      "png": 303993,
+      "split": null,
+      "variants": [
+        {
+          "w": 480,
+          "avif": 26046,
+          "webp": 55940
+        },
+        {
+          "w": 768,
+          "avif": 46273,
+          "webp": 110124
+        },
+        {
+          "w": 1024,
+          "avif": 55970,
+          "webp": 143852
+        }
+      ]
+    },
+    {
+      "beat": "06-Return",
+      "slug": "06-return",
+      "source": 1773261,
+      "png": 354603,
+      "split": null,
+      "variants": [
+        {
+          "w": 480,
+          "avif": 27846,
+          "webp": 63568
+        },
+        {
+          "w": 768,
+          "avif": 50991,
+          "webp": 126682
+        },
+        {
+          "w": 1024,
+          "avif": 60011,
+          "webp": 155926
+        }
+      ]
+    },
+    {
+      "beat": "07-Footer",
+      "slug": "07-footer",
+      "source": 1577274,
+      "png": 274606,
+      "split": null,
+      "variants": [
+        {
+          "w": 480,
+          "avif": 22673,
+          "webp": 50412
+        },
+        {
+          "w": 768,
+          "avif": 40902,
+          "webp": 100490
+        },
+        {
+          "w": 1024,
+          "avif": 49872,
+          "webp": 131192
+        }
+      ]
+    }
+  ]
+}

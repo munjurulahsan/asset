@@ -1,0 +1,1213 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tellus Halftone Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Fragment+Mono&display=swap">
+<style>
+  /* Single-look design: black ink on paper, per the brief. Colours are painted explicitly. */
+  :root {
+    color-scheme: light;
+    --paper: #f7f7f5;
+    --ink: #0b0b0c;
+    --ink-hover: #262627;
+    --graphite: #555552;
+    --slate: #6c6c68;
+    --pewter: #8b8b87;
+    --mist: #dcdcd7;
+    --haze: #ededea;
+    --sans: "Familjen Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: "Fragment Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --gutter: clamp(16px, 3.4vw, 44px);
+    --ease: cubic-bezier(.16, 1, .3, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection { background: var(--ink); color: var(--paper); }
+  a, button { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  /* ---------- Stage ---------- */
+  .stage {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+    min-height: calc(100svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    padding-inline: var(--gutter);
+  }
+  .map { position: absolute; inset: 0; z-index: -1; display: block; width: 100%; height: 100%; }
+  .wrap { width: 100%; max-width: 1360px; margin-inline: auto; }
+
+  /* ---------- Navigation ---------- */
+  .nav { position: relative; z-index: 5; }
+  .nav__bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: 76px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -.04em;
+    text-decoration: none;
+  }
+  .brand svg { width: 24px; height: 24px; flex: none; fill: currentColor; }
+  .nav__links {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 36px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .nav__links a, .nav__signin {
+    border-radius: 4px;
+    color: var(--graphite);
+    font-size: 15px;
+    letter-spacing: -.01em;
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .nav__links a:hover, .nav__signin:hover { color: var(--ink); }
+  .nav__actions { display: flex; align-items: center; gap: 22px; }
+  .pill-sm {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+    padding-inline: 17px;
+    border: 1px solid var(--mist);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--paper) 80%, transparent);
+    color: var(--ink);
+    font-size: 14.5px;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    text-decoration: none;
+    transition: background-color .25s, border-color .25s, color .25s;
+  }
+  .pill-sm:hover { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .menu-btn {
+    display: none;
+    place-items: center;
+    align-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--mist);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .menu-btn span { display: block; width: 14px; height: 1.5px; background: currentColor; transition: transform .3s var(--ease); }
+  .menu-btn[aria-expanded="true"] span:first-child { transform: translateY(3.25px) rotate(45deg); }
+  .menu-btn[aria-expanded="true"] span:last-child { transform: translateY(-3.25px) rotate(-45deg); }
+  .menu {
+    position: absolute;
+    top: calc(100% - 6px);
+    left: 0;
+    right: 0;
+    z-index: 6;
+    display: grid;
+    padding: 6px;
+    border: 1px solid var(--mist);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: 0 24px 48px -28px rgba(11, 11, 12, .35);
+  }
+  .menu a { padding: 13px 14px; border-radius: 12px; color: var(--ink); font-size: 17px; text-decoration: none; }
+  .menu a:hover { background: var(--haze); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    padding-block: clamp(24px, 4.5vh, 60px) clamp(64px, 10vh, 104px);
+  }
+  .hero__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    text-align: center;
+  }
+  .announce {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    padding: 0 13px 0 5px;
+    border: 1px solid var(--mist);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: var(--graphite);
+    font-size: 14px;
+    letter-spacing: -.005em;
+    text-decoration: none;
+    transition: border-color .25s, color .25s;
+  }
+  .announce:hover { border-color: var(--pewter); color: var(--ink); }
+  .announce__tag {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding-inline: 10px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .announce svg { width: 12px; height: 12px; flex: none; transition: transform .35s var(--ease); }
+  .announce:hover svg { transform: translateX(2px); }
+
+  .title {
+    margin: 0;
+    font-size: clamp(2.75rem, min(1.1rem + 6.9vw, 15.5vh), 8.75rem);
+    font-weight: 500;
+    line-height: .92;
+    letter-spacing: -.048em;
+  }
+  /* Each line is its own mask so the words rise into place; padding keeps descenders unclipped. */
+  .title__line { display: block; overflow: hidden; padding: .04em .08em .18em; margin: -.04em -.08em -.18em; }
+  .title__line > span { display: inline-block; }
+  .title__line--muted { color: var(--pewter); }
+
+  .lede {
+    margin: 0;
+    max-width: 35rem;
+    color: var(--graphite);
+    font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem);
+    line-height: 1.55;
+    letter-spacing: -.005em;
+    text-wrap: pretty;
+  }
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px 30px;
+    margin-top: 10px;
+  }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    height: 56px;
+    padding: 0 8px 0 26px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    text-decoration: none;
+    box-shadow: 0 12px 28px -16px rgba(11, 11, 12, .6);
+    transition: background-color .3s var(--ease), box-shadow .3s var(--ease);
+  }
+  .cta:hover { background: var(--ink-hover); box-shadow: 0 16px 32px -16px rgba(11, 11, 12, .7); }
+  .cta:focus-visible { outline-offset: 4px; }
+  .cta__icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .cta__icon svg { grid-area: 1 / 1; width: 16px; height: 16px; transition: transform .5s var(--ease); }
+  .cta__icon svg:last-child { transform: translateX(-190%); }
+  .cta:hover .cta__icon svg:first-child { transform: translateX(190%); }
+  .cta:hover .cta__icon svg:last-child { transform: none; }
+  .textlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding-block: 5px;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    text-decoration: none;
+    background:
+      linear-gradient(var(--ink), var(--ink)) 0 100% / 0 1px no-repeat,
+      linear-gradient(var(--mist), var(--mist)) 0 100% / 100% 1px no-repeat;
+    transition: background-size .5s var(--ease);
+  }
+  .textlink:hover { background-size: 100% 1px, 100% 1px; }
+  .textlink svg { width: 12px; height: 12px; }
+
+  /* Figure caption + coordinate readout, set like an atlas plate */
+  .hud {
+    position: absolute;
+    bottom: 22px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--slate);
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: .02em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 12px var(--paper);
+  }
+  .hud--l { left: 0; }
+  .hud--r { right: 0; }
+  .hud b { color: var(--ink); font-weight: 400; }
+  .hud__fig { color: var(--ink); letter-spacing: .1em; text-transform: uppercase; }
+  .hud__rule { width: 22px; height: 1px; background: currentColor; opacity: .6; }
+  .hud__icon { display: inline-grid; }
+  .hud__icon svg { width: 12px; height: 12px; }
+
+  /* Node tooltip */
+  .tip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    display: grid;
+    gap: 5px;
+    min-width: 164px;
+    padding: 10px 12px 11px;
+    border: 1px solid var(--mist);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 16px 32px -18px rgba(11, 11, 12, .3);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 10px));
+    transition: opacity .18s ease, transform .3s var(--ease);
+  }
+  .tip.is-on { opacity: 1; transform: translate(-50%, calc(-100% - 16px)); }
+  .tip.is-below { transform: translate(-50%, 10px); }
+  .tip.is-below.is-on { transform: translate(-50%, 16px); }
+  .tip__head { display: flex; align-items: baseline; gap: 8px; }
+  .tip__code { color: var(--slate); font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; }
+  .tip__city { color: var(--ink); font-size: 15px; font-weight: 500; letter-spacing: -.02em; }
+  .tip__meta { color: var(--slate); font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .tip__meta b { color: var(--ink); font-weight: 400; }
+
+  /* ---------- Client marquee ---------- */
+  .clients {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 48px;
+    padding-block: 24px 28px;
+    border-top: 1px solid var(--mist);
+  }
+  .clients__label {
+    margin: 0;
+    color: var(--slate);
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.55;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .marquee {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  }
+  .marquee__track { display: flex; width: max-content; }
+  .marquee.is-looping .marquee__track { animation: marquee 60s linear infinite; }
+  .marquee:hover .marquee__track { animation-play-state: paused; }
+  .marquee__group {
+    display: flex;
+    align-items: center;
+    gap: 64px;
+    margin: 0;
+    padding: 0 64px 0 0;
+    list-style: none;
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 28px;
+    color: var(--slate);
+    font-size: 19px;
+    line-height: 1;
+    white-space: nowrap;
+    transition: color .25s;
+  }
+  .logo:hover { color: var(--ink); }
+  .logo svg { width: 18px; height: 18px; flex: none; fill: currentColor; }
+  .logo--northfold { font-weight: 600; letter-spacing: -.035em; }
+  .logo--vesper { font-family: Georgia, "Times New Roman", serif; font-size: 21px; font-style: italic; letter-spacing: -.01em; }
+  .logo--arcline { font-family: var(--mono); font-size: 14px; letter-spacing: .2em; text-transform: uppercase; }
+  .logo--quarry { font-size: 21px; font-weight: 700; letter-spacing: -.055em; }
+  .logo--solstice { font-weight: 500; letter-spacing: -.02em; }
+  .logo--halden { font-family: Georgia, "Times New Roman", serif; font-size: 15px; letter-spacing: .28em; text-transform: uppercase; }
+  .logo--monogrid { font-family: var(--mono); font-size: 16px; letter-spacing: -.02em; }
+  .logo--kestrel { font-size: 20px; font-weight: 600; letter-spacing: -.045em; }
+  .logo--isthmus { font-size: 20px; letter-spacing: -.02em; }
+  .logo--tidewater { font-weight: 500; letter-spacing: .01em; }
+
+  /* ---------- Motion ---------- */
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes rise { from { transform: translateY(130%); } }
+  @keyframes lift { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes marquee { to { transform: translate3d(-50%, 0, 0); } }
+  .nav { animation: fade .9s var(--ease) both; }
+  .announce { animation: lift .9s var(--ease) .1s both; }
+  .title__line > span { animation: rise 1.15s var(--ease) .16s both; }
+  .title__line + .title__line > span { animation-delay: .26s; }
+  .lede { animation: lift 1s var(--ease) .42s both; }
+  .ctas { animation: lift 1s var(--ease) .52s both; }
+  .hud, .clients { animation: fade 1.4s var(--ease) .75s both; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-height: 780px) and (min-width: 721px) {
+    .nav__bar { height: 68px; }
+    .hero { padding-block: 16px 60px; }
+    .hero__copy { gap: 20px; }
+    .clients { padding-block: 18px 22px; }
+  }
+  @media (max-width: 900px) {
+    .nav__links, .nav__signin { display: none; }
+    .menu-btn { display: inline-grid; }
+    .nav__actions { gap: 10px; }
+  }
+  /* Portrait and phone: the map sits under the copy instead of behind it (kept in sync with the script). */
+  @media (max-width: 720px), (orientation: portrait) and (max-width: 1024px) {
+    .hero { place-items: start center; padding-block: clamp(24px, 5vw, 48px) calc(51vw + 52px); }
+    .hud--r { display: none; }
+    .hud--l { bottom: 18px; }
+  }
+  @media (max-width: 720px) {
+    .nav__bar { height: 64px; }
+    .hero__copy { gap: 22px; }
+    .announce__more, .hud__long { display: none; }
+    .clients { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-block: 20px 24px; }
+    .clients__label { text-align: center; }
+    .clients__label br { display: none; }
+    .marquee__group { gap: 44px; padding-right: 44px; }
+    .logo { font-size: 17px; }
+  }
+  /* Phones on their side: tighten everything so the copy fits a short screen. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .nav__bar { height: 58px; }
+    .hero { padding-block: 6px 52px; }
+    .hero__copy { gap: 14px; }
+    .announce { height: 30px; font-size: 13px; }
+    .announce__tag { height: 21px; }
+    .lede { max-width: 40rem; font-size: 15px; line-height: 1.5; }
+    .ctas { margin-top: 2px; }
+    .cta { height: 46px; padding-left: 20px; font-size: 15px; }
+    .cta__icon { width: 34px; height: 34px; }
+    .hud { bottom: 16px; }
+    .clients { padding-block: 14px 16px; }
+  }
+</style>
+
+<div class="stage">
+  <canvas class="map" aria-hidden="true"></canvas>
+
+  <header class="nav wrap">
+    <div class="nav__bar">
+      <a class="brand" href="#" aria-label="Tellus home">
+        <!-- Halftone sphere: dot size grows away from the light -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="7.5" cy="3" r=".98"/><circle cx="12" cy="3" r="1.16"/><circle cx="16.5" cy="3" r="1.34"/>
+          <circle cx="3" cy="7.5" r=".98"/><circle cx="7.5" cy="7.5" r="1.16"/><circle cx="12" cy="7.5" r="1.34"/><circle cx="16.5" cy="7.5" r="1.53"/><circle cx="21" cy="7.5" r="1.71"/>
+          <circle cx="3" cy="12" r="1.16"/><circle cx="7.5" cy="12" r="1.34"/><circle cx="12" cy="12" r="1.53"/><circle cx="16.5" cy="12" r="1.71"/><circle cx="21" cy="12" r="1.89"/>
+          <circle cx="3" cy="16.5" r="1.34"/><circle cx="7.5" cy="16.5" r="1.53"/><circle cx="12" cy="16.5" r="1.71"/><circle cx="16.5" cy="16.5" r="1.89"/><circle cx="21" cy="16.5" r="2.07"/>
+          <circle cx="7.5" cy="21" r="1.71"/><circle cx="12" cy="21" r="1.89"/><circle cx="16.5" cy="21" r="2.07"/>
+        </svg>
+        <span>Tellus</span>
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav__links">
+          <li><a href="#">Product</a></li>
+          <li><a href="#">Network</a></li>
+          <li><a href="#">Customers</a></li>
+          <li><a href="#">Pricing</a></li>
+        </ul>
+      </nav>
+      <div class="nav__actions">
+        <a class="nav__signin" href="#">Sign in</a>
+        <a class="pill-sm" href="#">Get started</a>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Open menu"><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="menu" id="menu" hidden>
+      <a href="#">Product</a>
+      <a href="#">Network</a>
+      <a href="#">Customers</a>
+      <a href="#">Pricing</a>
+      <a href="#">Sign in</a>
+    </div>
+  </header>
+
+  <main class="hero wrap">
+    <div class="hero__copy">
+      <a class="announce" href="#">
+        <span class="announce__tag">New</span>
+        <span>Sunrise scheduling<span class="announce__more"> — go live at dawn in every market</span></span>
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+      </a>
+      <h1 class="title">
+        <span class="title__line"><span>Made anywhere.</span></span>
+        <span class="title__line title__line--muted"><span>Seen everywhere.</span></span>
+      </h1>
+      <p class="lede">Render, localize and ship creative from one canvas to 38 edge regions — live in every market, even the ones still asleep.</p>
+      <div class="ctas">
+        <a class="cta" href="#">
+          Start creating
+          <span class="cta__icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </span>
+        </a>
+        <a class="textlink" href="#">
+          Book a demo
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <p class="hud hud--l" aria-hidden="true">
+      <span class="hud__fig">Fig. 1</span>
+      <span class="hud__rule"></span>
+      <span>Night side<span class="hud__long">, rendered live</span></span>
+      <b data-clock>00:00:00</b><span>UTC</span>
+    </p>
+    <p class="hud hud--r" aria-hidden="true">
+      <span class="hud__icon" data-icon="sun"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="2.3" fill="currentColor"/><circle cx="6" cy="6" r="4.9" fill="none" stroke="currentColor" stroke-dasharray="1.2 1.4"/></svg></span>
+      <span class="hud__icon" data-icon="cursor" hidden><svg viewBox="0 0 12 12" fill="none" stroke="currentColor"><circle cx="6" cy="6" r="3.2"/><path d="M6 .5v2.6M6 8.9v2.6M.5 6h2.6M8.9 6h2.6"/></svg></span>
+      <span data-hud-label>Sun overhead</span>
+      <b data-hud-coords></b>
+    </p>
+  </main>
+
+  <section class="clients wrap" aria-labelledby="clients-label">
+    <p class="clients__label" id="clients-label">Trusted by studios<br> on six continents</p>
+    <div class="marquee">
+      <div class="marquee__track">
+        <ul class="marquee__group">
+          <li class="logo logo--northfold"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2h14L2 16Z"/><path d="M16 2v14H2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Northfold</li>
+          <li class="logo logo--vesper">Vesper &amp; Co.</li>
+          <li class="logo logo--arcline"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 15.5A13 13 0 0 1 15.5 2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="15.5" cy="15.5" r="2.2"/></svg>Arcline</li>
+          <li class="logo logo--quarry"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2h14v9l-5 5H2Z"/></svg>quarry</li>
+          <li class="logo logo--solstice"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 2a7 7 0 0 1 0 14Z"/></svg>Solstice</li>
+          <li class="logo logo--halden">Halden</li>
+          <li class="logo logo--monogrid"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="5" cy="5" r="2.4"/><circle cx="13" cy="5" r="2.4"/><circle cx="5" cy="13" r="2.4"/><circle cx="13" cy="13" r="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>mono/grid</li>
+          <li class="logo logo--kestrel"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1 15 9.5 3H17L8.5 15Z"/></svg>Kestrel</li>
+          <li class="logo logo--isthmus"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="4.5" cy="9" r="3.5"/><circle cx="13.5" cy="9" r="3.5"/><path d="M7 8.2h4v1.6H7Z"/></svg>isthmus</li>
+          <li class="logo logo--tidewater"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 11.5c2.4 0 2.4-4.5 4.8-4.5s2.4 4.5 4.8 4.5 2.4-4.5 4.8-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Tidewater</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="tip" aria-hidden="true">
+    <div class="tip__head"><span class="tip__code" data-tip-code></span><span class="tip__city" data-tip-city></span></div>
+    <div class="tip__meta"><b data-tip-time></b> local · <span data-tip-phase></span></div>
+  </div>
+</div>
+
+<script src="world-mask.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // Tweak the map here.
+  const CONFIG = {
+    centralMeridian: 11,  // degrees east at the centre of the map
+    latTop: 84,           // crop: Greenland's northern tip …
+    latBottom: -57,       // … to Cape Horn (no Antarctica)
+    columns: 256,         // dots across the full map width on desktop
+    nightShading: true,   // dots are larger where it is currently night
+    lens: true,           // dots swell under the cursor
+    ripples: true,        // click/tap sends a ring through the map
+    arcs: true,           // occasional transfers between nodes
+  };
+
+  // ---------- Menu ----------
+  const menuBtn = document.querySelector('.menu-btn');
+  const menu = document.getElementById('menu');
+  if (menuBtn && menu) {
+    const setMenu = open => {
+      menu.hidden = !open;
+      menuBtn.setAttribute('aria-expanded', String(open));
+      menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    };
+    menuBtn.addEventListener('click', () => setMenu(menu.hidden));
+    menu.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !menu.hidden) { setMenu(false); menuBtn.focus(); }
+    });
+  }
+
+  // ---------- Logo marquee: a second, hidden copy makes the loop seamless ----------
+  const track = document.querySelector('.marquee__track');
+  if (track && track.firstElementChild) {
+    const copy = track.firstElementChild.cloneNode(true);
+    copy.setAttribute('aria-hidden', 'true');
+    track.append(copy);
+    track.parentElement.classList.add('is-looping');
+  }
+
+  // ---------- Halftone map ----------
+  const M = window.WORLD_MASK;
+  const stage = document.querySelector('.stage');
+  const canvas = document.querySelector('.map');
+  const ctx = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+  if (!M || !stage || !ctx) return;
+
+  const RAD = Math.PI / 180, TAU = Math.PI * 2;
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const easeOut = t => 1 - (1 - t) ** 3;
+  const easeInOut = t => (t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+  const hash = (a, b) => {
+    let h = (Math.imul(a | 0, 0x27d4eb2d) ^ Math.imul(b | 0, 0x165667b1)) >>> 0;
+    h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+    h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  };
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stackedMQ = window.matchMedia('(max-width: 720px), (orientation: portrait) and (max-width: 1024px)');
+  const tokens = getComputedStyle(document.documentElement);
+  const INK = tokens.getPropertyValue('--ink').trim() || '#0b0b0c';
+  const PAPER = tokens.getPropertyValue('--paper').trim() || '#f7f7f5';
+  const INK_RGB = [1, 3, 5].map(i => parseInt(INK.slice(i, i + 2), 16)).join(',');
+
+  // Land mask → summed-area table, so any dot cell's land coverage is O(1).
+  const MW = M.w, MH = M.h, MS = MW + 1;
+  const SAT = new Uint32Array(MS * (MH + 1));
+  {
+    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const code = new Int8Array(128);
+    for (let i = 0; i < 64; i++) code[A.charCodeAt(i)] = i;
+    const rle = M.rle;
+    let p = 0;
+    for (let y = 0; y < MH; y++) {
+      const row = (y + 1) * MS, prev = y * MS;
+      let x = 0, land = 0, run = 0;
+      while (x < MW) {
+        const c = code[rle.charCodeAt(p++)];
+        const n = c < 32 ? c : ((c - 32) << 6) | code[rle.charCodeAt(p++)];
+        const end = Math.min(MW, x + n);
+        for (; x < end; x++) { run += land; SAT[row + x + 1] = SAT[prev + x + 1] + run; }
+        land ^= 1;
+      }
+    }
+  }
+  function coverage(lonW, lonE, latN, latS) {
+    const y0 = clamp(Math.floor((M.lat0 - latN) / M.res), 0, MH);
+    const y1 = clamp(Math.ceil((M.lat0 - latS) / M.res), 0, MH);
+    if (y1 <= y0) return 0;
+    let x0 = Math.floor((lonW - M.lon0) / M.res), x1 = Math.ceil((lonE - M.lon0) / M.res);
+    const span = x1 - x0, shift = Math.floor(x0 / MW) * MW;
+    x0 -= shift; x1 -= shift;
+    const box = (a, b) => SAT[y1 * MS + b] - SAT[y0 * MS + b] - SAT[y1 * MS + a] + SAT[y0 * MS + a];
+    const sum = x1 <= MW ? box(x0, x1) : box(x0, MW) + box(0, x1 - MW);
+    return sum / (span * (y1 - y0));
+  }
+
+  // Miller cylindrical projection.
+  const millerY = lat => 1.25 * Math.log(Math.tan(Math.PI / 4 + .4 * lat * RAD));
+  const millerLat = y => (2.5 * Math.atan(Math.exp(.8 * y)) - .625 * Math.PI) / RAD;
+  const YN = millerY(CONFIG.latTop), YS = millerY(CONFIG.latBottom), YSPAN = YN - YS;
+  const ASPECT = TAU / YSPAN;
+  const wrapLon = l => ((l + 540) % 360) - 180;
+
+  // Low-precision solar position (±0.1°): subsolar latitude/longitude for a UTC instant.
+  function sunPosition(ms) {
+    const d = (ms - 946728000000) / 86400000;               // days since J2000.0
+    const g = (357.529 + .98560028 * d) * RAD;               // mean anomaly
+    const q = 280.459 + .98564736 * d;                        // mean longitude
+    const L = (q + 1.915 * Math.sin(g) + .02 * Math.sin(2 * g)) * RAD;
+    const e = (23.439 - .00000036 * d) * RAD;                 // obliquity
+    const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / RAD;
+    const dec = Math.asin(Math.sin(e) * Math.sin(L)) / RAD;
+    const gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+    return { lat: dec, lon: wrapLon(((ra - gmst * 15) % 360) + 360) };
+  }
+
+  // Edge regions, named by airport code as network PoPs usually are.
+  // Minor regions are left off the smaller stacked (phone/portrait) map.
+  const nodes = [
+    ['ANC', 'Anchorage', 61.22, -149.9, 'America/Anchorage', 1],
+    ['SFO', 'San Francisco', 37.77, -122.42, 'America/Los_Angeles'],
+    ['MEX', 'Mexico City', 19.43, -99.13, 'America/Mexico_City', 1],
+    ['NYC', 'New York', 40.71, -74.01, 'America/New_York'],
+    ['SCL', 'Santiago', -33.45, -70.67, 'America/Santiago', 1],
+    ['GRU', 'São Paulo', -23.55, -46.63, 'America/Sao_Paulo'],
+    ['LHR', 'London', 51.51, -.13, 'Europe/London'],
+    ['ARN', 'Stockholm', 59.33, 18.07, 'Europe/Stockholm', 1],
+    ['LOS', 'Lagos', 6.52, 3.38, 'Africa/Lagos'],
+    ['CPT', 'Cape Town', -33.92, 18.42, 'Africa/Johannesburg'],
+    ['DXB', 'Dubai', 25.2, 55.27, 'Asia/Dubai', 1],
+    ['BOM', 'Mumbai', 19.08, 72.88, 'Asia/Kolkata'],
+    ['SIN', 'Singapore', 1.35, 103.82, 'Asia/Singapore'],
+    ['ICN', 'Seoul', 37.57, 126.98, 'Asia/Seoul', 1],
+    ['NRT', 'Tokyo', 35.68, 139.69, 'Asia/Tokyo'],
+    ['SYD', 'Sydney', -33.87, 151.21, 'Australia/Sydney'],
+    ['AKL', 'Auckland', -36.85, 174.76, 'Pacific/Auckland', 1],
+  ].map(([code, city, lat, lon, tz, minor], i) => {
+    let fmt = null;
+    try { fmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz }); } catch (err) { /* unknown zone */ }
+    return { code, city, lat, lon, fmt, minor: !!minor, x: 0, y: 0, f: 0, phase: hash(i, 17) * 3.4, ping: 0 };
+  });
+
+  // ---------- State ----------
+  const base = document.createElement('canvas');
+  const bctx = base.getContext('2d');
+  const map = { x: 0, y: 0, w: 0, h: 0 };
+  let W = 0, H = 0, DPR = 1, stacked = false;
+  let spacing = 7, rMax = 1.8, capR = 3, lensR = 150;
+  let bandTop = 0, bandBottom = 0, copyBottom = 0;
+  let E = { cx: 0, cy: 0, rx: 1, ry: 1 };
+  let boxes = [], huds = [];
+  let N = 0, X, Y, LAT, LON, COV, NZ, NZ2, FADE, KO, RF, R, BOOST, TGT, ON, DELAY;
+  let active = [];
+  const G = 160;
+  let gc = 0, gr = 0, gStart = new Uint32Array(1), gOrder = new Uint32Array(0);
+  let sun = sunPosition(Date.now());
+  // The intro plays only if animation frames arrive right after load; a page opened in a
+  // background tab (or captured as a thumbnail) simply shows the finished plate.
+  const bootAt = performance.now();
+  let introT0 = 0, introState = reduced ? 'done' : 'pending', raf = 0, last = 0, nextArc = 0;
+  const pointer = { x: 0, y: 0, in: false };
+  const ripples = [], arcs = [];
+  let hover = null;
+
+  function alloc(n) {
+    X = new Float32Array(n); Y = new Float32Array(n); LAT = new Float32Array(n); LON = new Float32Array(n);
+    COV = new Float32Array(n); NZ = new Float32Array(n); NZ2 = new Float32Array(n); FADE = new Float32Array(n);
+    KO = new Float32Array(n); RF = new Float32Array(n); R = new Float32Array(n); BOOST = new Float32Array(n);
+    TGT = new Float32Array(n); ON = new Uint8Array(n); DELAY = new Float32Array(n);
+  }
+
+  function project(lat, lon) {
+    const dl = wrapLon(lon - CONFIG.centralMeridian);
+    return [map.x + ((dl + 180) / 360) * map.w, map.y + ((YN - millerY(lat)) / YSPAN) * map.h];
+  }
+  function unproject(x, y) {
+    const u = (x - map.x) / map.w, v = (y - map.y) / map.h;
+    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+    return [millerLat(YN - v * YSPAN), wrapLon(CONFIG.centralMeridian - 180 + u * 360)];
+  }
+
+  // How much of a dot survives at (x, y): dissolves toward the copy, is knocked out
+  // cleanly around each text block, and stays off the nav and the logo strip.
+  let lastKO = 1;
+  function fadeAt(x, y, nz) {
+    let sd = 1e9;
+    for (let b = 0; b < boxes.length; b++) {
+      const B = boxes[b];
+      const qx = Math.abs(x - B.cx) - B.hw + B.r, qy = Math.abs(y - B.cy) - B.hh + B.r;
+      const d = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - B.r;
+      if (d < sd) sd = d;
+    }
+    lastKO = smooth(0, 44, sd);
+    let f = smooth(18, stacked ? 56 : 104, sd + (nz - .5) * 20);
+    if (!stacked) {
+      const de = Math.hypot((x - E.cx) / E.rx, (y - E.cy) / E.ry) + (nz - .5) * .22;
+      f *= smooth(.58, 1.45, de) * smooth(bandTop - 10, bandTop + 26, y);
+    } else {
+      // Under the copy: only the Arctic edge dissolves, so Europe and North America stay legible.
+      f *= smooth(copyBottom - 20, copyBottom + 12, y) * smooth(map.y - map.h * .02, map.y + map.h * .2, y + (nz - .5) * 24);
+    }
+    // Keep the corner captions readable.
+    for (let b = 0; b < huds.length; b++) {
+      const B = huds[b];
+      const hx = Math.max(Math.abs(x - B.cx) - B.hw, 0), hy = Math.max(Math.abs(y - B.cy) - B.hh, 0);
+      f *= smooth(4, 34, Math.hypot(hx, hy) + (nz - .5) * 10);
+    }
+    return f * (1 - smooth(bandBottom - 40, bandBottom - 4, y));
+  }
+
+  function measure() {
+    const s = stage.getBoundingClientRect();
+    W = s.width; H = s.height;
+    stacked = stackedMQ.matches;
+    const rel = el => {
+      const r = el.getBoundingClientRect();
+      return { l: r.left - s.left, t: r.top - s.top, w: r.width, h: r.height, b: r.bottom - s.top };
+    };
+    const copyEl = document.querySelector('.hero__copy');
+    const copy = rel(copyEl);
+    bandTop = rel(document.querySelector('.nav')).b;
+    bandBottom = rel(document.querySelector('.clients')).t;
+    copyBottom = copy.b;
+
+    boxes = [];
+    let textW = 0;
+    const addBox = (cx, cy, hw, hh) => {
+      boxes.push({ cx, cy, hw, hh, r: Math.min(hw, hh) * .6 });
+      textW = Math.max(textW, hw * 2);
+    };
+    // Title lines are measured by their (untransformed) inner width so the intro animation doesn't skew them.
+    copyEl.querySelectorAll('.title__line').forEach(line => {
+      const r = rel(line);
+      addBox(r.l + r.w / 2, r.t + r.h / 2, line.firstElementChild.offsetWidth / 2, r.h / 2);
+    });
+    copyEl.querySelectorAll('.announce, .lede, .ctas').forEach(el => {
+      const r = rel(el);
+      addBox(r.l + r.w / 2, r.t + r.h / 2, r.w / 2, r.h / 2);
+    });
+    E = { cx: copy.l + copy.w / 2, cy: copy.t + copy.h / 2, rx: textW / 2 + 30, ry: copy.h / 2 + 12 };
+    huds = [];
+    let hudTop = bandBottom;
+    document.querySelectorAll('.hud').forEach(el => {
+      const r = rel(el);
+      if (!r.w) return;                                      // hidden at this size
+      huds.push({ cx: r.l + r.w / 2, cy: r.t + r.h / 2, hw: r.w / 2, hh: r.h / 2 });
+      hudTop = Math.min(hudTop, r.t);
+    });
+
+    const band = bandBottom - bandTop;
+    if (!stacked) {
+      map.w = Math.min(Math.max(W * 1.04, (copy.h + 300) * ASPECT), band * ASPECT * 1.12);
+      map.h = map.w / ASPECT;
+      map.x = (W - map.w) / 2;
+      map.y = bandTop + (band - map.h) / 2 - 6;
+    } else {
+      map.w = W * 1.14;
+      map.h = map.w / ASPECT;
+      map.x = (W - map.w) / 2;
+      // Centre the map in whatever room is left between the copy and the caption,
+      // so a tall tablet doesn't leave an empty band under it.
+      const top = copyBottom - map.h * .08, room = hudTop - 14 - top;
+      map.y = top + Math.max(0, (room - map.h) / 2);
+    }
+    spacing = clamp(map.w / (stacked ? 108 : CONFIG.columns), 4, 9);
+    rMax = spacing * .25;
+    capR = spacing * .46;
+    lensR = stacked ? 90 : 150;
+  }
+
+  function build() {
+    const rowH = spacing * .8660254;               // staggered (hexagonal) halftone screen
+    const rows = Math.floor(map.h / rowH);
+    const cols = Math.ceil(map.w / spacing) + 1;
+    alloc(rows * cols);
+    const halfLon = (spacing / map.w) * 180;
+    const toLat = yy => millerLat(YN - ((yy - map.y) / map.h) * YSPAN);
+    let n = 0;
+    for (let r = 0; r < rows; r++) {
+      const y = map.y + (r + .5) * rowH;
+      if (y < -6 || y > H + 6) continue;
+      const lat = toLat(y), latN = toLat(y - rowH / 2), latS = toLat(y + rowH / 2);
+      for (let c = 0; c < cols; c++) {
+        const x = map.x + (c + .25 + (r & 1) * .5) * spacing;
+        if (x > map.x + map.w || x < -6 || x > W + 6) continue;
+        const lon = CONFIG.centralMeridian - 180 + ((x - map.x) / map.w) * 360;
+        const cov = coverage(lon - halfLon, lon + halfLon, latN, latS);
+        if (cov < .16) continue;
+        X[n] = x; Y[n] = y; LAT[n] = lat; LON[n] = wrapLon(lon); COV[n] = cov;
+        NZ[n] = hash(r, c); NZ2[n] = hash(c + 911, r + 3079);
+        n++;
+      }
+    }
+    N = n;
+    for (let i = 0; i < N; i++) {
+      FADE[i] = fadeAt(X[i], Y[i], NZ[i]);
+      KO[i] = lastKO;
+      DELAY[i] = .05 + (X[i] / W) * .45 + NZ2[i] * .6;
+    }
+    active = [];
+    buildGrid();
+  }
+
+  // Bucket dots into cells so the lens only touches its neighbourhood.
+  function buildGrid() {
+    gc = Math.ceil(W / G) + 1; gr = Math.ceil(H / G) + 1;
+    const cells = gc * gr, start = new Uint32Array(cells + 1), cell = new Uint32Array(N);
+    for (let i = 0; i < N; i++) {
+      const k = clamp(Math.floor(Y[i] / G), 0, gr - 1) * gc + clamp(Math.floor(X[i] / G), 0, gc - 1);
+      cell[i] = k; start[k + 1]++;
+    }
+    for (let k = 0; k < cells; k++) start[k + 1] += start[k];
+    const fill = start.slice(0, cells);
+    gOrder = new Uint32Array(N);
+    for (let i = 0; i < N; i++) gOrder[fill[cell[i]]++] = i;
+    gStart = start;
+  }
+
+  // Tone: coastline cells print smaller (partial land), the day side prints lighter.
+  function shade() {
+    sun = sunPosition(Date.now());
+    const sd = Math.sin(sun.lat * RAD), cd = Math.cos(sun.lat * RAD);
+    for (let i = 0; i < N; i++) {
+      let tone = 1;
+      if (CONFIG.nightShading) {
+        const la = LAT[i] * RAD;
+        const cz = Math.sin(la) * sd + Math.cos(la) * cd * Math.cos((LON[i] - sun.lon) * RAD);
+        tone = .68 + .32 * (1 - smooth(-.2, .12, cz));    // a soft twilight band, ~18° wide
+      }
+      RF[i] = rMax * (.42 + .58 * Math.sqrt(COV[i])) * tone;
+      R[i] = RF[i] * FADE[i];
+    }
+  }
+
+  function placeNodes() {
+    for (const n of nodes) {
+      const [x, y] = project(n.lat, n.lon);
+      n.x = x; n.y = y;
+      n.f = x > 12 && x < W - 12 && y > 12 && y < H - 12 && !(stacked && n.minor) ? fadeAt(x, y, .5) : 0;
+    }
+  }
+
+  function phaseOf(n) {
+    const la = n.lat * RAD;
+    const cz = Math.sin(la) * Math.sin(sun.lat * RAD) + Math.cos(la) * Math.cos(sun.lat * RAD) * Math.cos((n.lon - sun.lon) * RAD);
+    if (cz > .1) return 'daylight';
+    if (cz < -.1) return 'night';
+    return wrapLon(sun.lon - n.lon) > 0 ? 'dawn' : 'dusk';
+  }
+
+  function dots(c, from, to, scaleOf) {
+    c.fillStyle = INK;
+    c.beginPath();
+    for (let i = from; i < to; i++) {
+      const r = scaleOf(i);
+      if (r < .3) continue;
+      c.moveTo(X[i] + r, Y[i]);
+      c.arc(X[i], Y[i], r, 0, TAU);
+    }
+    c.fill();
+  }
+
+  function renderBase() {
+    bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    bctx.clearRect(0, 0, W, H);
+    dots(bctx, 0, N, i => R[i]);
+  }
+
+  // ---------- Interaction: lens + ripples swell dots above their printed size ----------
+  function updateBoost(now, dt) {
+    for (let j = 0; j < active.length; j++) TGT[active[j]] = 0;
+    const want = (i, w, reveal) => {
+      const v = Math.min(capR, Math.max(R[i] * (1 + w), RF[i] * reveal * w * KO[i])) - R[i];
+      if (v <= .02) return;
+      if (v > TGT[i]) TGT[i] = v;
+      if (!ON[i]) { ON[i] = 1; active.push(i); }
+    };
+    if (CONFIG.lens && pointer.in) {
+      const L = lensR, L2 = L * L, px = pointer.x, py = pointer.y;
+      const cx0 = clamp(Math.floor((px - L) / G), 0, gc - 1), cx1 = clamp(Math.floor((px + L) / G), 0, gc - 1);
+      const cy0 = clamp(Math.floor((py - L) / G), 0, gr - 1), cy1 = clamp(Math.floor((py + L) / G), 0, gr - 1);
+      for (let cy = cy0; cy <= cy1; cy++) {
+        for (let cx = cx0; cx <= cx1; cx++) {
+          const cell = cy * gc + cx;
+          for (let k = gStart[cell], end = gStart[cell + 1]; k < end; k++) {
+            const i = gOrder[k], dx = X[i] - px, dy = Y[i] - py, d2 = dx * dx + dy * dy;
+            if (d2 >= L2) continue;
+            const q = 1 - d2 / L2;
+            want(i, q * q * .8, .62);
+          }
+        }
+      }
+    }
+    for (let j = ripples.length - 1; j >= 0; j--) {
+      const rp = ripples[j], age = (now - rp.t0) / 1000;
+      if (age > 1.6) { ripples.splice(j, 1); continue; }
+      const rad = age * 640, amp = 1 - age / 1.6, wd = 44;
+      const lo = Math.max(0, rad - 2.4 * wd), hi = rad + 2.4 * wd, lo2 = lo * lo, hi2 = hi * hi;
+      for (let i = 0; i < N; i++) {
+        const dx = X[i] - rp.x, dy = Y[i] - rp.y, d2 = dx * dx + dy * dy;
+        if (d2 < lo2 || d2 > hi2) continue;
+        const dd = (Math.sqrt(d2) - rad) / wd;
+        want(i, Math.exp(-dd * dd) * amp, .8);
+      }
+    }
+    const e = 1 - Math.pow(.78, dt * 60);
+    for (let j = active.length - 1; j >= 0; j--) {
+      const i = active[j];
+      BOOST[i] += (TGT[i] - BOOST[i]) * e;
+      if (TGT[i] === 0 && BOOST[i] < .015) {
+        BOOST[i] = 0; ON[i] = 0;
+        active[j] = active[active.length - 1];
+        active.pop();
+      }
+    }
+  }
+
+  function drawBoost() {
+    if (!active.length) return;
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    for (let j = 0; j < active.length; j++) {
+      const i = active[j], r = R[i] + BOOST[i];
+      if (r < .3) continue;
+      ctx.moveTo(X[i] + r, Y[i]);
+      ctx.arc(X[i], Y[i], r, 0, TAU);
+    }
+    ctx.fill();
+  }
+
+  // ---------- Nodes + transfer arcs ----------
+  const qp = (A, t) => {
+    const u = 1 - t;
+    return [u * u * A.a.x + 2 * u * t * A.cx + t * t * A.b.x, u * u * A.a.y + 2 * u * t * A.cy + t * t * A.b.y];
+  };
+  function spawnArc(now) {
+    const vis = nodes.filter(n => n.f > .55);
+    if (vis.length < 2) return;
+    for (let tries = 0; tries < 18; tries++) {
+      const a = vis[(Math.random() * vis.length) | 0], b = vis[(Math.random() * vis.length) | 0];
+      if (a === b) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+      if (len < 90 || len > Math.min(560, W * .42)) continue;
+      let nx = -dy / len, ny = dx / len;
+      if (ny > 0) { nx = -nx; ny = -ny; }                    // always bow upward
+      const A = { a, b, cx: (a.x + b.x) / 2 + nx * len * .3, cy: (a.y + b.y) / 2 + ny * len * .3, t0: now, dur: 1000 + len * 1.7, landed: false };
+      let ok = true;
+      for (let s = 1; s < 8 && ok; s++) { const [x, y] = qp(A, s / 8); ok = y > bandTop && fadeAt(x, y, .5) > .3; }
+      if (ok) { arcs.push(A); return; }
+    }
+  }
+  function drawArcs(now) {
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    for (let j = arcs.length - 1; j >= 0; j--) {
+      const A = arcs[j], t = (now - A.t0) / A.dur;
+      const head = easeInOut(clamp(t, 0, 1)), tail = easeInOut(clamp((t - .3) / .8, 0, 1));
+      if (tail >= .999) { arcs.splice(j, 1); continue; }
+      if (t >= 1 && !A.landed) { A.landed = true; A.b.ping = now; }
+      const [hx, hy] = qp(A, head), [tx, ty] = qp(A, tail);
+      const g = ctx.createLinearGradient(tx, ty, hx, hy);
+      g.addColorStop(0, `rgba(${INK_RGB},0)`);
+      g.addColorStop(1, `rgba(${INK_RGB},.55)`);
+      ctx.strokeStyle = g;
+      ctx.beginPath();
+      for (let s = 0; s <= 32; s++) {
+        const [x, y] = qp(A, tail + ((head - tail) * s) / 32);
+        if (s) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+      if (t < 1) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(hx, hy, 2.1, 0, TAU); ctx.fill(); }
+    }
+  }
+  function drawNodes(now, k) {
+    if (k <= 0) return;
+    const s = stacked ? .75 : 1;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = INK;
+    for (const n of nodes) {
+      if (n.f < .4) continue;
+      const a = smooth(.4, .8, n.f) * k, on = n === hover;
+      if (!reduced) {
+        const p = ((now / 1000 + n.phase) % 3.4) / 3.4;
+        ctx.globalAlpha = a * (1 - p) * .5;
+        ctx.beginPath(); ctx.arc(n.x, n.y, (4 + p * 15) * s, 0, TAU); ctx.stroke();
+        if (n.ping) {
+          const q = (now - n.ping) / 1000;
+          if (q < 1) { ctx.globalAlpha = a * (1 - q) * .9; ctx.beginPath(); ctx.arc(n.x, n.y, (4 + easeOut(q) * 24) * s, 0, TAU); ctx.stroke(); }
+          else n.ping = 0;
+        }
+      }
+      ctx.globalAlpha = a;
+      ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(n.x, n.y, (on ? 7.5 : 5.5) * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(n.x, n.y, (on ? 4 : 3) * s, 0, TAU); ctx.fill();
+      if (on) { ctx.beginPath(); ctx.arc(n.x, n.y, 11 * s, 0, TAU); ctx.stroke(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- Frame ----------
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    const dt = last ? Math.min(.05, (now - last) / 1000) : 1 / 60;
+    last = now;
+    if (W < 2 || H < 2) return;
+    if (introState === 'pending') {
+      introState = now - bootAt < 700 ? 'running' : 'done';
+      introT0 = now;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    let k = 1;
+    if (introState === 'running') {
+      // The plate "prints" in: each dot swells from nothing on a staggered, left-leaning schedule.
+      const t = (now - introT0) / 1000;
+      dots(ctx, 0, N, i => {
+        const p = (t - DELAY[i]) / .7;
+        return p <= 0 ? 0 : R[i] * (p >= 1 ? 1 : easeOut(p));
+      });
+      k = smooth(.9, 1.7, t);
+      if (t > 1.9) introState = 'done';
+    } else {
+      ctx.drawImage(base, 0, 0, W, H);
+    }
+    updateBoost(now, dt);
+    drawBoost();
+    if (CONFIG.arcs && !reduced) {
+      if (introState === 'done' && now > nextArc) {
+        if (arcs.length < 2) spawnArc(now);
+        nextArc = now + 1500 + Math.random() * 2200;
+      }
+      drawArcs(now);
+    }
+    drawNodes(now, k);
+  }
+
+  // ---------- HUD ----------
+  const clockEl = document.querySelector('[data-clock]');
+  const hudLabel = document.querySelector('[data-hud-label]');
+  const hudCoords = document.querySelector('[data-hud-coords]');
+  const iconSun = document.querySelector('[data-icon="sun"]');
+  const iconCursor = document.querySelector('[data-icon="cursor"]');
+  const deg = (v, pos, neg, w) => `${Math.abs(v).toFixed(2).padStart(w, '0')}° ${v >= 0 ? pos : neg}`;
+  const coords = (lat, lon) => `${deg(lat, 'N', 'S', 5)} ${deg(lon, 'E', 'W', 6)}`;
+  function hudIdle() {
+    if (!hudCoords) return;
+    hudLabel.textContent = 'Sun overhead';
+    hudCoords.textContent = coords(sun.lat, sun.lon);
+    iconSun.hidden = false; iconCursor.hidden = true;
+  }
+  function hudCursor() {
+    const ll = unproject(pointer.x, pointer.y);
+    if (!ll || !hudCoords) { hudIdle(); return; }
+    hudLabel.textContent = 'Cursor';
+    hudCoords.textContent = coords(ll[0], ll[1]);
+    iconSun.hidden = true; iconCursor.hidden = false;
+  }
+  const tick = () => { if (clockEl) clockEl.textContent = new Date().toISOString().slice(11, 19); };
+  tick();
+  setInterval(tick, 1000);
+
+  // ---------- Tooltip ----------
+  const tip = document.querySelector('.tip');
+  const tipCode = tip.querySelector('[data-tip-code]'), tipCity = tip.querySelector('[data-tip-city]');
+  const tipTime = tip.querySelector('[data-tip-time]'), tipPhase = tip.querySelector('[data-tip-phase]');
+  let tipTimer = 0;
+  function setHover(n) {
+    if (n === hover) return;
+    hover = n;
+    if (!n) { tip.classList.remove('is-on'); return; }
+    tipCode.textContent = n.code;
+    tipCity.textContent = n.city;
+    tipTime.textContent = n.fmt ? n.fmt.format(new Date()) : '';
+    tipPhase.textContent = phaseOf(n);
+    tip.style.left = `${clamp(n.x, 96, W - 96)}px`;
+    tip.style.top = `${n.y}px`;
+    tip.classList.toggle('is-below', n.y < 130);
+    tip.classList.add('is-on');
+  }
+  function updateHover(radius, fromTouch) {
+    let best = null, bd = radius * radius;
+    for (const n of nodes) {
+      if (n.f < .4) continue;
+      const dx = n.x - pointer.x, dy = n.y - pointer.y, d2 = dx * dx + dy * dy;
+      if (d2 < bd) { bd = d2; best = n; }
+    }
+    setHover(best);
+    if (fromTouch) { clearTimeout(tipTimer); if (best) tipTimer = setTimeout(() => setHover(null), 2800); }
+  }
+
+  // ---------- Events ----------
+  const local = e => { const s = stage.getBoundingClientRect(); return [e.clientX - s.left, e.clientY - s.top]; };
+  stage.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    [pointer.x, pointer.y] = local(e);
+    pointer.in = true;
+    updateHover(16, false);
+    hudCursor();
+  }, { passive: true });
+  stage.addEventListener('pointerleave', () => { pointer.in = false; setHover(null); hudIdle(); });
+  stage.addEventListener('pointerdown', e => {
+    if (e.target.closest('a, button, .menu')) return;
+    const [x, y] = local(e);
+    if (e.pointerType === 'touch') { pointer.x = x; pointer.y = y; updateHover(26, true); }
+    if (CONFIG.ripples && !reduced) {
+      ripples.push({ x, y, t0: performance.now() });
+      if (ripples.length > 3) ripples.shift();
+    }
+  });
+
+  function relayout() {
+    measure();
+    if (W < 2 || H < 2) return;
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = base.width = Math.round(W * DPR);
+    canvas.height = base.height = Math.round(H * DPR);
+    build();
+    shade();
+    placeNodes();
+    arcs.length = 0;
+    hover = null;
+    tip.classList.remove('is-on');
+    renderBase();
+    paintStatic();
+    if (!pointer.in) hudIdle();
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+
+  // Paint the finished plate straight away, without waiting for an animation frame.
+  function paintStatic() {
+    if (introState === 'running') return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.drawImage(base, 0, 0, W, H);
+    drawNodes(performance.now(), 1);
+  }
+
+  relayout();
+  if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
+  else window.addEventListener('resize', relayout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+  setTimeout(relayout, 1600);                    // after the copy has settled from its intro
+  setInterval(() => {                            // the terminator moves ~0.25° a minute
+    shade();
+    renderBase();
+    paintStatic();
+    if (!pointer.in) hudIdle();
+  }, 60000);
+})();
+</script>
